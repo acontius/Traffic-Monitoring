@@ -9,3 +9,5 @@ CREATE TABLE traffic_data
 SELECT create_hypertable('traffic_data', 'timestamp');
 
 SELECT * FROM traffic_data;
+
+DELETE FROM traffic_data;
