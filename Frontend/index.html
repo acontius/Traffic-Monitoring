@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نقشه دوربین‌های ترافیک</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="topbar__title">
+          <h1>نقشه دوربین‌های ترافیکی</h1>
+          <p>نمایش وضعیت و آخرین داده‌ی هر دوربین روی نقشه</p>
+        </div>
+
+        <div class="topbar__legend">
+          <div class="legend-item">
+            <span class="legend-dot legend-dot--active"></span>
+            <span>فعال</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot legend-dot--inactive"></span>
+            <span>غیرفعال</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="map-panel">
+          <div id="map"></div>
+        </section>
+
+        <aside class="info-panel">
+          <div class="info-panel__header">
+            <h2>اطلاعات دوربین</h2>
+            <button id="refresh-selected" class="ghost-btn" type="button">بروزرسانی</button>
+          </div>
+
+          <div id="empty-state" class="empty-state">
+            <div class="empty-state__icon">📷</div>
+            <h3>هنوز دوربینی انتخاب نشده</h3>
+            <p>روی یکی از دوربین‌های نقشه کلیک کنید تا آخرین اطلاعات آن نمایش داده شود.</p>
+          </div>
+
+          <div id="camera-details" class="camera-details hidden">
+            <div class="camera-card">
+              <div class="camera-card__top">
+                <div>
+                  <div id="camera-name" class="camera-name">cam-01</div>
+                  <div id="camera-type" class="camera-type">urban</div>
+                </div>
+
+                <div id="camera-status-badge" class="status-badge status-badge--inactive">
+                  غیرفعال
+                </div>
+              </div>
+
+              <div class="meta-grid">
+                <div class="meta-item">
+                  <span class="meta-item__label">آخرین زمان</span>
+                  <span id="camera-timestamp" class="meta-item__value">—</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-item__label">وضعیت اتصال</span>
+                  <span id="camera-connection" class="meta-item__value">—</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="camera-card">
+              <div class="section-title">شمارش‌ها</div>
+              <div id="counts-grid" class="counts-grid"></div>
+            </div>
+
+            <div class="camera-card">
+              <div class="section-title">جزئیات خام payload</div>
+              <pre id="payload-viewer" class="payload-viewer">—</pre>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
