@@ -1,0 +1,65 @@
+<div class="reports">
+  <section class="card reports__filters">
+    <h2>گزارش‌گیری</h2>
+    <div class="reports__filter-grid">
+      <label>
+        دستگاه
+        <select name="device_id" [(ngModel)]="filter.device_id">
+          <option [ngValue]="undefined">همه</option>
+          <option *ngFor="let device of devices()" [ngValue]="device.device_id">
+            {{ device.label || device.device_id }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        نوع محور
+        <select name="location_type" [(ngModel)]="filter.location_type">
+          <option [ngValue]="undefined">همه</option>
+          <option value="urban">شهری</option>
+          <option value="highway">اتوبانی</option>
+          <option value="industrial">صنعتی</option>
+        </select>
+      </label>
+
+      <label>
+        از تاریخ
+        <input type="datetime-local" name="date_from" [(ngModel)]="filter.date_from" />
+      </label>
+
+      <label>
+        تا تاریخ
+        <input type="datetime-local" name="date_to" [(ngModel)]="filter.date_to" />
+      </label>
+    </div>
+
+    <div class="reports__actions">
+      <button class="btn btn--primary" type="button" (click)="runReport()">اجرای گزارش</button>
+      <button class="btn" type="button" (click)="downloadCsv()">دانلود CSV</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>دستگاه</th>
+            <th>نوع محور</th>
+            <th>زمان</th>
+            <th>شمارش‌ها</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows()">
+            <td>{{ row.device_id }}</td>
+            <td>{{ row.payload?.location_type }}</td>
+            <td>{{ row.timestamp }}</td>
+            <td>{{ row.payload?.counts | json }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p *ngIf="!rows().length">داده‌ای برای نمایش وجود ندارد.</p>
+  </section>
+</div>

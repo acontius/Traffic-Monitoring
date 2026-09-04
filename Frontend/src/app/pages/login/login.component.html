@@ -1,0 +1,30 @@
+<div class="login">
+  <form class="login__card card" (ngSubmit)="submit()">
+    <h1>ورود به سامانه</h1>
+    <p class="login__subtitle">مدیریت ترددشمارها</p>
+
+    <label>
+      نام کاربری
+      <input name="username" type="text" [(ngModel)]="username" required autocomplete="username" />
+    </label>
+
+    <label>
+      رمز عبور
+      <input
+        name="password"
+        type="password"
+        [(ngModel)]="password"
+        required
+        autocomplete="current-password"
+      />
+    </label>
+
+    @if (errorMessage(); as message) {
+      <div class="login__error">{{ message }}</div>
+    }
+
+    <button class="btn btn--primary" type="submit" [disabled]="loading()">
+      {{ loading() ? 'در حال ورود...' : 'ورود' }}
+    </button>
+  </form>
+</div>

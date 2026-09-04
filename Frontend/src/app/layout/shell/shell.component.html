@@ -1,0 +1,42 @@
+<div class="shell">
+  <header class="shell__topbar card">
+    <div class="shell__title">
+      <h1>سامانه مدیریت ترددشمارها</h1>
+      <p>TCMS</p>
+    </div>
+
+    <nav class="shell__nav">
+      <a routerLink="/dashboard" routerLinkActive="shell__nav-link--active" class="shell__nav-link">
+        داشبورد
+      </a>
+      <a routerLink="/alerts" routerLinkActive="shell__nav-link--active" class="shell__nav-link">
+        اعلان‌ها
+        @if (unacknowledgedCount() > 0) {
+          <span class="shell__badge">{{ unacknowledgedCount() }}</span>
+        }
+      </a>
+      <a routerLink="/reports" routerLinkActive="shell__nav-link--active" class="shell__nav-link">
+        گزارش‌ها
+      </a>
+      <a
+        routerLink="/manual-control"
+        routerLinkActive="shell__nav-link--active"
+        class="shell__nav-link"
+      >
+        کنترل دستی
+      </a>
+    </nav>
+
+    <button class="btn" type="button" (click)="logout()">خروج</button>
+  </header>
+
+  <main class="shell__content">
+    <router-outlet></router-outlet>
+  </main>
+
+  @if (toast(); as alert) {
+    <div class="shell__toast" [class]="'shell__toast--' + alert.severity">
+      <strong>{{ alert.message }}</strong>
+    </div>
+  }
+</div>

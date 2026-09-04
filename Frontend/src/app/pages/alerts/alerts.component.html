@@ -1,0 +1,33 @@
+<div class="alerts card">
+  <div class="alerts__header">
+    <h2>اعلان‌ها</h2>
+    <button class="btn" type="button" (click)="toggleFilter()">
+      {{ unacknowledgedOnly() ? 'نمایش همه' : 'فقط تاییدنشده‌ها' }}
+    </button>
+  </div>
+
+  <div class="alert-row" *ngFor="let alert of alerts()">
+    <div class="alert-row__main">
+      <span class="status-badge" [class]="'severity-badge--' + alert.severity">
+        {{ alert.severity }}
+      </span>
+      <span class="alert-row__message">{{ alert.message }}</span>
+    </div>
+    <div class="alert-row__meta">
+      {{ alert.device_id || '—' }} • {{ alert.created_at }}
+    </div>
+    <button
+      class="btn"
+      type="button"
+      *ngIf="!alert.acknowledged_at"
+      (click)="acknowledge(alert)"
+    >
+      تایید
+    </button>
+    <span *ngIf="alert.acknowledged_at" class="alert-row__ack">
+      تایید‌شده توسط {{ alert.acknowledged_by }}
+    </span>
+  </div>
+
+  <p *ngIf="!alerts().length" class="alerts__empty">اعلانی وجود ندارد.</p>
+</div>
