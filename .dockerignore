@@ -11,3 +11,9 @@ env/
 .vscode/
 .DS_Store
 *.log
+.pytest_cache/
+.ruff_cache/
+
+# The Angular app builds in its own container (Frontend/Dockerfile); the
+# Python app/simulator/mock-external images never need it.
+Frontend/

@@ -62,16 +62,9 @@ venv.bak/
 .vscode/
 *.sublime-workspace
 
-# Docker
-docker-compose.yml
-Dockerfile
-# Ignore all files in the 'build' directory, if you have one
-# build/
-
-# Frontend build artifacts
-# If you have a build folder for your frontend
-# build/
-# dist/
+# Frontend build/deps (the Angular app under Frontend/ has its own .gitignore
+# for node_modules/dist; this just covers the repo root)
+node_modules/
 
 # OS generated files
 .DS_Store
