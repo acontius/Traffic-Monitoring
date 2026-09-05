@@ -55,3 +55,15 @@ async def broadcast_device_update(
             "data": {"device_id": device_id, "status": status, "latest": latest},
         }
     )
+
+
+async def broadcast_anomaly_event(event: dict) -> None:
+    await _broadcast({"event": "anomaly_detected", "data": event})
+
+
+async def broadcast_reconstruction_event(event: dict) -> None:
+    await _broadcast({"event": "reconstruction_completed", "data": event})
+
+
+async def broadcast_device_health(event: dict) -> None:
+    await _broadcast({"event": "device_health_changed", "data": event})

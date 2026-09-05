@@ -154,10 +154,67 @@ docker compose exec db psql -U acontius -d traffic_monitoring -c "
 "
 ```
 
+## ML layer walkthrough (device health, anomalies, reconstruction confidence)
+
+The simulator supports controllable anomaly scenarios
+(`TCMS_SIMULATOR_ANOMALY_MODE`, or per-device via
+`TCMS_SIMULATOR_DEVICE_SCENARIOS`) so the ML layer (docs/ML_ARCHITECTURE.md)
+can be exercised end to end without waiting for real anomalies.
+
+**Silence → `DEVICE_SILENCE` alert + device health `OFFLINE`:**
+
+```bash
+docker compose stop simulator   # or: run one device with mode "missing_data"
+# wait > expected_interval_seconds * (1 + grace) + one health-scan interval
+curl -s http://localhost:8000/ml/devices/cam-01/health -H "Authorization: Bearer $TOKEN"
+curl -s http://localhost:8000/alerts -H "Authorization: Bearer $TOKEN" | grep device_silence
+```
+
+**Spike → anomaly event + alert:**
+
+```bash
+docker compose run --rm -e TCMS_SIMULATOR_ANOMALY_MODE=spike simulator
+curl -s http://localhost:8000/ml/devices/cam-01/anomalies -H "Authorization: Bearer $TOKEN"
+```
+
+**Constant values → device health `SUSPICIOUS`:**
+
+```bash
+docker compose run --rm -e TCMS_SIMULATOR_ANOMALY_MODE=constant_value simulator
+curl -s http://localhost:8000/ml/devices/cam-01/health -H "Authorization: Bearer $TOKEN"
+```
+
+**Missing interval with good history → auto-reconstruction with confidence:**
+After training a model (`docker compose exec app python -m
+Backend.scripts.train_model`) and letting a device run normally for a while,
+stop it briefly, then:
+
+```bash
+curl -s "http://localhost:8000/ml/devices/cam-01/reconstructions" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Look for `confidence`, `reconstruction_level`, `model_version`, and
+`review_status: "auto"`.
+
+**Missing interval with poor/no history → manual review:** a brand-new
+device (register one, per the "adding a new device" section above) that
+goes silent immediately has no history for any level to use — expect
+`review_status` never reaches `"auto"`, a `manual_review_required` alert,
+and no value silently presented as trusted.
+
+**Model status:**
+
+```bash
+curl -s http://localhost:8000/ml/models -H "Authorization: Bearer $TOKEN"
+curl -s http://localhost:8000/ml/metrics -H "Authorization: Bearer $TOKEN"
+```
+
 ## What this walkthrough actually exercises
 
 Login → auth (JWT) → device registry → WebSocket ingestion → validation →
 storage → live push (`/ws/live`) → forwarding outbox → reconstruction engine
-→ alerts → reports. If any step above doesn't behave as described, that's a
-real bug worth filing, not an environment quirk — it's the same path this
-doc was verified against.
+→ alerts → reports → device health/anomaly detection/confidence-gated
+reconstruction (ML layer). If any step above doesn't behave as described,
+that's a real bug worth filing, not an environment quirk — it's the same
+path this doc was verified against.

@@ -97,6 +97,28 @@ def _json(row: asyncpg.Record | None) -> Optional[dict]:
 # --- reconstruction_log -----------------------------------------------------
 
 
+async def has_pending_manual_review(
+    pool: asyncpg.pool.Pool, device_id: str, timestamp: datetime
+) -> bool:
+    """Used to avoid re-raising `manual_review_required` every scan interval
+    for a silent-device gap that has already been logged as needing manual
+    review (the corrupt-record path is separately guarded by
+    `data_quality_status`, since that gap has an actual row to mark)."""
+    async with pool.acquire() as con:
+        return bool(
+            await con.fetchval(
+                """
+                SELECT 1 FROM reconstruction_log
+                WHERE device_id = $1 AND timestamp = $2
+                  AND method LIKE '%(manual_review)'
+                LIMIT 1
+                """,
+                device_id,
+                timestamp,
+            )
+        )
+
+
 async def list_log(
     pool: asyncpg.pool.Pool, device_id: Optional[str], limit: int
 ) -> list[dict]:
@@ -173,6 +195,11 @@ async def find_corrupt_records(pool: asyncpg.pool.Pool) -> list[asyncpg.Record]:
             FROM traffic_records r
             JOIN devices d ON d.device_id = r.device_id
             WHERE r.is_valid = false AND r.is_reconstructed = false
+              -- Already flagged for manual review last pass: don't re-attempt
+              -- (and re-alert) every scan interval until an operator acts
+              -- (manual override, or a future model/config change) — see
+              -- docs/RECONSTRUCTION.md "known limitations".
+              AND r.data_quality_status != 'manual_review'
             ORDER BY r.timestamp
             LIMIT 500
             """)

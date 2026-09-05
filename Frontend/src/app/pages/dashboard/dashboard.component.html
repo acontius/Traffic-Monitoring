@@ -20,4 +20,11 @@
       </a>
     </div>
   </aside>
+
+  <aside class="dashboard__list card" *ngIf="recentEvents.length">
+    <h2>رویدادهای هوش مصنوعی</h2>
+    <div class="device-row" *ngFor="let entry of recentEvents">
+      <div class="device-row__meta">{{ entry }}</div>
+    </div>
+  </aside>
 </div>

@@ -71,13 +71,20 @@ async def upsert_reconstructed_or_manual(
         await con.execute(
             """
             INSERT INTO traffic_records
-                (device_id, timestamp, payload,
-                 is_valid, anomaly_flag, is_reconstructed)
-            VALUES ($1, $2, $3, true, false, true)
+                (device_id, timestamp, payload, raw_payload,
+                 is_valid, anomaly_flag, is_reconstructed, data_quality_status)
+            VALUES ($1, $2, $3, $3, true, false, true, 'reconstructed')
             ON CONFLICT (device_id, timestamp) DO UPDATE
                 SET payload = EXCLUDED.payload,
+                    -- Never overwrite the original device observation, even
+                    -- when this row is later reconstructed/overridden
+                    -- (spec §17).
+                    raw_payload = COALESCE(
+                        traffic_records.raw_payload, EXCLUDED.payload
+                    ),
                     is_valid = true,
-                    is_reconstructed = true
+                    is_reconstructed = true,
+                    data_quality_status = 'reconstructed'
             """,
             device_id,
             timestamp,
@@ -98,20 +105,27 @@ async def upsert_ingested(
     reaching this point — see `domains.ingestion.validation`); leaves
     `is_reconstructed` alone. Used directly by `domains.ingestion.service`,
     same shared-table pattern as `upsert_reconstructed_or_manual`."""
+    data_quality_status = "suspect" if anomaly_flag else "valid"
     async with pool.acquire() as con:
         await con.execute(
             """
             INSERT INTO traffic_records
-                (device_id, timestamp, payload, is_valid, anomaly_flag, anomaly_reason)
-            VALUES ($1, $2, $3, true, $4, $5)
+                (device_id, timestamp, payload, raw_payload,
+                 is_valid, anomaly_flag, anomaly_reason, data_quality_status)
+            VALUES ($1, $2, $3, $3, true, $4, $5, $6)
             ON CONFLICT (device_id, timestamp) DO UPDATE
                 SET payload = EXCLUDED.payload,
+                    raw_payload = COALESCE(
+                        traffic_records.raw_payload, EXCLUDED.payload
+                    ),
                     anomaly_flag = EXCLUDED.anomaly_flag,
-                    anomaly_reason = EXCLUDED.anomaly_reason
+                    anomaly_reason = EXCLUDED.anomaly_reason,
+                    data_quality_status = EXCLUDED.data_quality_status
             """,
             device_id,
             timestamp,
             json.dumps(payload),
             anomaly_flag,
             anomaly_reason,
+            data_quality_status,
         )

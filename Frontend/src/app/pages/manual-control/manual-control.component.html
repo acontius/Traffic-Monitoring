@@ -63,4 +63,60 @@
       <p *ngIf="overrideStatus() as status">{{ status }}</p>
     </div>
   </section>
+
+  <section class="card">
+    <h2>رویدادهای ترافیکی سفارشی</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>نام</th>
+            <th>نوع</th>
+            <th>شروع</th>
+            <th>پایان</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let event of trafficEvents()">
+            <td>{{ event.name }}</td>
+            <td>{{ event.event_type }}</td>
+            <td>{{ event.start_at }}</td>
+            <td>{{ event.end_at }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p *ngIf="!trafficEvents().length">رویدادی ثبت نشده است.</p>
+
+    <div class="override-form">
+      <label>
+        نام رویداد
+        <input type="text" name="event_name" [(ngModel)]="eventForm.name" />
+      </label>
+
+      <label>
+        نوع
+        <input type="text" name="event_type" [(ngModel)]="eventForm.event_type" />
+      </label>
+
+      <label>
+        شروع
+        <input type="datetime-local" name="event_start" [(ngModel)]="eventForm.start_at" />
+      </label>
+
+      <label>
+        پایان
+        <input type="datetime-local" name="event_end" [(ngModel)]="eventForm.end_at" />
+      </label>
+
+      <label>
+        توضیحات
+        <input type="text" name="event_description" [(ngModel)]="eventForm.description" />
+      </label>
+
+      <button class="btn btn--primary" type="button" (click)="submitTrafficEvent()">ثبت رویداد</button>
+
+      <p *ngIf="eventStatus() as status">{{ status }}</p>
+    </div>
+  </section>
 </div>

@@ -11,6 +11,46 @@
     </div>
   </section>
 
+  <section class="card" *ngIf="health() as h">
+    <h3>سلامت دستگاه</h3>
+    <div class="meta-grid">
+      <div>
+        <span class="meta-label">وضعیت</span><br />
+        <span class="status-badge" [class]="'status-badge--' + h.health_status.toLowerCase()">
+          {{ h.health_status }}
+        </span>
+      </div>
+      <div><span class="meta-label">آخرین بررسی</span><br />{{ h.snapshot_at || '—' }}</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>رویدادهای ناهنجار</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>زمان</th>
+            <th>نوع</th>
+            <th>شدت</th>
+            <th>امتیاز</th>
+            <th>وضعیت</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let event of anomalies()">
+            <td>{{ event.timestamp }}</td>
+            <td>{{ event.anomaly_type }}</td>
+            <td>{{ event.severity }}</td>
+            <td>{{ event.score | number: '1.2-2' }}</td>
+            <td>{{ event.status }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p *ngIf="!anomalies().length">موردی ثبت نشده است.</p>
+  </section>
+
   <section class="card">
     <h3>تاریخچه تردد</h3>
     <div class="table-wrap">
@@ -49,6 +89,9 @@
           <tr>
             <th>زمان بازه</th>
             <th>روش</th>
+            <th>اطمینان</th>
+            <th>نسخه مدل</th>
+            <th>وضعیت بررسی</th>
             <th>دستی</th>
             <th>ثبت‌شده در</th>
           </tr>
@@ -57,6 +100,9 @@
           <tr *ngFor="let entry of reconstructionLog()">
             <td>{{ entry.timestamp }}</td>
             <td>{{ entry.method }}</td>
+            <td>{{ entry.confidence != null ? (entry.confidence | number: '1.2-2') : '—' }}</td>
+            <td>{{ entry.model_version || '—' }}</td>
+            <td>{{ entry.review_status || 'auto' }}</td>
             <td>{{ entry.manual_override ? entry.created_by : '—' }}</td>
             <td>{{ entry.created_at }}</td>
           </tr>

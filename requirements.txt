@@ -11,7 +11,12 @@ h11==0.16.0
 httpx==0.28.1
 idna==3.14
 iniconfig==2.3.0
+jdatetime==5.2.0
+numpy==2.3.4
 packaging==26.3
+pandas==2.3.3
+scikit-learn==1.7.2
+scipy==1.16.2
 passlib==1.7.4
 pluggy==1.6.0
 PyJWT==2.10.1

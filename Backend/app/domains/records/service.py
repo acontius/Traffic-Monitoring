@@ -57,4 +57,6 @@ async def manual_override(
         entity_id=f"{device_id}@{timestamp.isoformat()}",
         details={"counts": counts, "reason": reason},
     )
-    await forwarding_service.enqueue(pool, device_id, timestamp, payload)
+    await forwarding_service.enqueue(
+        pool, device_id, timestamp, payload, data_classification="manual_override"
+    )
