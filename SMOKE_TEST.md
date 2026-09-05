@@ -210,6 +210,78 @@ curl -s http://localhost:8000/ml/models -H "Authorization: Bearer $TOKEN"
 curl -s http://localhost:8000/ml/metrics -H "Authorization: Bearer $TOKEN"
 ```
 
+## Controlled protocol/data-quality scenarios
+
+The scenarios above cover normal operation, silence, spike, and constant
+values. The rest of the negative/edge cases are exercised by
+`Backend/Devices/test_scenarios.py` — a one-shot CLI that sends exactly one
+deliberately-shaped message and reports what happened, verified against a
+live stack:
+
+```bash
+docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario invalid-json
+docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario invalid-structure
+docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario wrong-device
+docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario negative
+docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario timestamp --variant malformed
+docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario timestamp --variant future
+docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario timestamp --variant duplicate
+docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario timestamp --variant out-of-order
+```
+
+Verify the actual outcome of each (not just that the socket stayed open):
+
+```bash
+curl -s http://localhost:8000/alerts -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+```
+
+Confirmed behaviour, run against a live stack while writing this doc:
+
+- **Invalid JSON** (`{invalid-json`): `json.loads` fails inside
+  `handle_message`, an `invalid_payload` alert is raised, the connection
+  stays open — every other device keeps ingesting normally.
+- **Invalid structure** (`{"device_id": "cam-01", "foo": "bar"}`):
+  `validate_structure` raises `ValidationError`, an `invalid_payload` alert
+  is raised, and an `ingest_rejected` row is written to `audit_log`. No
+  `traffic_records` row is created.
+- **Wrong device_id** (connected as `cam-01`, payload claims `cam-99`): the
+  mismatch is detected, an `invalid_payload` alert is raised, and nothing is
+  persisted for either device — confirmed via `GET /records/cam-99/history`
+  returning `[]` and `GET /devices/cam-99` returning `404` (cam-99 was never
+  registered).
+- **Negative count** (`"سواری": -10`): rejected the same way as invalid
+  structure (`ValidationError: invalid count for 'سواری': -10`).
+- **Timestamp — malformed**: rejected (`unparseable timestamp`).
+- **Timestamp — future** (>5 min clock skew): rejected (`timestamp too far
+  in the future`).
+- **Timestamp — duplicate**: **not rejected.** `traffic_records`'s primary
+  key is `(device_id, timestamp)` and the insert is an `ON CONFLICT ... DO
+  UPDATE` — the second message silently overwrites the first. This is the
+  actual implemented behaviour; there is no duplicate-specific alert.
+- **Timestamp — out-of-order** (an earlier timestamp sent after later
+  readings, still within the 24h backdate window): accepted normally —
+  there is no monotonic-ordering check in `validate_structure`, only the
+  future/backdate bounds.
+
+Manual override (operator overwrites a stored/reconstructed value by hand):
+
+```bash
+curl -s -X POST http://localhost:8000/records/manual-override \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+        "device_id": "cam-01",
+        "timestamp": "2026-01-01T08:00:00+00:00",
+        "counts": {"سواری": 18, "کامیون": 3},
+        "reason": "camera was obstructed, operator estimate from field report"
+      }'
+
+curl -s "http://localhost:8000/reconstruction/log?device_id=cam-01&limit=1" \
+  -H "Authorization: Bearer $TOKEN"
+# → method: "manual_override", manual_override: true, created_by: "admin"
+```
+
+Also exposed in the frontend's Manual Control page.
+
 ## What this walkthrough actually exercises
 
 Login → auth (JWT) → device registry → WebSocket ingestion → validation →
