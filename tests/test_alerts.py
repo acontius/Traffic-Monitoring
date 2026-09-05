@@ -27,7 +27,9 @@ async def test_raise_alert_persists_and_broadcasts_without_sms_by_default(monkey
     broadcast_alert = _recorder()
     send_sms_alert = _recorder()
 
-    monkeypatch.setattr(notifications_service.alerts_queries, "insert_alert", insert_alert)
+    monkeypatch.setattr(
+        notifications_service.alerts_queries, "insert_alert", insert_alert
+    )
     monkeypatch.setattr(notifications_service, "broadcast_alert", broadcast_alert)
     monkeypatch.setattr(notifications_service, "send_sms_alert", send_sms_alert)
 
@@ -42,7 +44,7 @@ async def test_raise_alert_persists_and_broadcasts_without_sms_by_default(monkey
     assert alert_id == 42
     assert len(insert_alert.calls) == 1
     assert len(broadcast_alert.calls) == 1
-    (broadcast_args, _) = broadcast_alert.calls[0]
+    broadcast_args, _ = broadcast_alert.calls[0]
     assert broadcast_args[0]["type"] == "invalid_payload"
     assert broadcast_args[0]["device_id"] == "cam-01"
     # warning severity must not trigger SMS
@@ -55,7 +57,9 @@ async def test_raise_alert_sends_sms_only_for_critical_severity(monkeypatch):
     broadcast_alert = _recorder()
     send_sms_alert = _recorder()
 
-    monkeypatch.setattr(notifications_service.alerts_queries, "insert_alert", insert_alert)
+    monkeypatch.setattr(
+        notifications_service.alerts_queries, "insert_alert", insert_alert
+    )
     monkeypatch.setattr(notifications_service, "broadcast_alert", broadcast_alert)
     monkeypatch.setattr(notifications_service, "send_sms_alert", send_sms_alert)
 
@@ -68,5 +72,5 @@ async def test_raise_alert_sends_sms_only_for_critical_severity(monkeypatch):
     )
 
     assert len(send_sms_alert.calls) == 1
-    (sms_args, _) = send_sms_alert.calls[0]
+    sms_args, _ = send_sms_alert.calls[0]
     assert sms_args[0] == "ارسال ناموفق بود"

@@ -30,10 +30,16 @@ async def test_manual_override_logs_reconstruction_audit_and_forwarding(monkeypa
     record_audit = _recorder()
     enqueue = _recorder()
 
-    monkeypatch.setattr(records_service.devices_queries, "get_location_type", _location_type)
-    monkeypatch.setattr(records_service.queries, "upsert_reconstructed_or_manual", upsert)
     monkeypatch.setattr(
-        records_service.reconstruction_service, "log_manual_override", log_manual_override
+        records_service.devices_queries, "get_location_type", _location_type
+    )
+    monkeypatch.setattr(
+        records_service.queries, "upsert_reconstructed_or_manual", upsert
+    )
+    monkeypatch.setattr(
+        records_service.reconstruction_service,
+        "log_manual_override",
+        log_manual_override,
     )
     monkeypatch.setattr(records_service, "record_audit", record_audit)
     monkeypatch.setattr(records_service.forwarding_service, "enqueue", enqueue)
@@ -51,7 +57,7 @@ async def test_manual_override_logs_reconstruction_audit_and_forwarding(monkeypa
     )
 
     assert len(upsert.calls) == 1
-    ((_, dev_id, ts, payload), _kwargs) = upsert.calls[0]
+    (_, dev_id, ts, payload), _kwargs = upsert.calls[0]
     assert dev_id == "cam-01"
     assert ts == timestamp
     assert payload["counts"] == counts
@@ -65,7 +71,7 @@ async def test_manual_override_logs_reconstruction_audit_and_forwarding(monkeypa
     assert log_args[5] == "admin"  # actor
 
     assert len(record_audit.calls) == 1
-    (_, audit_kwargs) = record_audit.calls[0]
+    _, audit_kwargs = record_audit.calls[0]
     assert audit_kwargs["actor"] == "admin"
     assert audit_kwargs["action"] == "manual_override"
     assert audit_kwargs["details"]["counts"] == counts
@@ -75,5 +81,5 @@ async def test_manual_override_logs_reconstruction_audit_and_forwarding(monkeypa
     # (data_classification is passed as a keyword by every caller in this
     # codebase) — verified here rather than assumed.
     assert len(enqueue.calls) == 1
-    (_, enqueue_kwargs) = enqueue.calls[0]
+    _, enqueue_kwargs = enqueue.calls[0]
     assert enqueue_kwargs["data_classification"] == "manual_override"

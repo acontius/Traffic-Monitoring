@@ -26,7 +26,8 @@ Usage:
     python -m Backend.Devices.test_scenarios --scenario timestamp --variant out-of-order
 
 Or, from the host, via the running `simulator` container:
-    docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario spike
+    docker compose exec simulator python -m Backend.Devices.test_scenarios \
+        --scenario spike
 """
 
 import argparse
@@ -86,11 +87,17 @@ async def _send_and_observe(url: str, messages: list[str], label: str) -> None:
             except asyncio.TimeoutError:
                 pass
             except ConnectionClosed as exc:
-                print(f"✗ server closed the connection: code={exc.code} reason={exc.reason!r}")
+                print(
+                    f"✗ server closed the connection: "
+                    f"code={exc.code} reason={exc.reason!r}"
+                )
                 return
             print("✓ connection still open after send — server did not crash")
     except ConnectionClosed as exc:
-        print(f"✗ connection rejected/closed at handshake: code={exc.code} reason={exc.reason!r}")
+        print(
+            f"✗ connection rejected/closed at handshake: "
+            f"code={exc.code} reason={exc.reason!r}"
+        )
     print(
         "Check the dashboard/API to see the actual outcome, e.g.:\n"
         "  GET /records/{device_id}/history\n"
@@ -159,7 +166,9 @@ def _scenario_invalid_structure(device_id: str) -> tuple[list[str], str]:
     )
 
 
-def _scenario_wrong_device(device_id: str, payload_device_id: str) -> tuple[list[str], str]:
+def _scenario_wrong_device(
+    device_id: str, payload_device_id: str
+) -> tuple[list[str], str]:
     payload = _payload(payload_device_id, NORMAL_COUNTS)
     return [json.dumps(payload, ensure_ascii=False)], (
         f"Connected as '{device_id}' but the payload claims to be "
@@ -215,7 +224,9 @@ def _scenario_timestamp(device_id: str, variant: str) -> tuple[list[str], str]:
             "other in-range reading."
         )
     else:
-        raise SystemExit(f"unknown --variant {variant!r}, choose from {TIMESTAMP_VARIANTS}")
+        raise SystemExit(
+            f"unknown --variant {variant!r}, choose from {TIMESTAMP_VARIANTS}"
+        )
     return [json.dumps(payload, ensure_ascii=False)], note
 
 
@@ -335,7 +346,8 @@ def main() -> None:
         print(
             "\nExample:\n"
             "  python -m Backend.Devices.test_scenarios --scenario spike\n"
-            "  docker compose exec simulator python -m Backend.Devices.test_scenarios --scenario spike"
+            "  docker compose exec simulator python -m Backend.Devices.test_scenarios"
+            " --scenario spike"
         )
         return
 

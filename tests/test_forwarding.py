@@ -31,7 +31,10 @@ async def test_enqueue_forwards_data_classification_to_queries(monkeypatch):
 
     timestamp = datetime.now(timezone.utc)
     await forwarding_service.enqueue(
-        POOL, "cam-01", timestamp, {"counts": {"سواری": 5}},
+        POOL,
+        "cam-01",
+        timestamp,
+        {"counts": {"سواری": 5}},
         data_classification="reconstructed",
     )
 
@@ -110,6 +113,6 @@ async def test_run_once_marks_dead_letter_after_max_attempts(monkeypatch):
     args, _ = record_attempt_result.calls[0]
     assert args[2] == "dead_letter"
     assert len(raise_alert.calls) == 1
-    (_, alert_kwargs) = raise_alert.calls[0]
+    _, alert_kwargs = raise_alert.calls[0]
     assert alert_kwargs["alert_type"] == "forwarding_failed"
     assert alert_kwargs["severity"] == "critical"

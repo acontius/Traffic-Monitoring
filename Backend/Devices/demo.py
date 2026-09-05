@@ -88,7 +88,9 @@ async def run_demo() -> None:
 
         _step(1, "Normal input")
         await _send_ws_message(_payload(DEMO_DEVICE_ID, NORMAL_COUNTS))
-        history = await client.get(f"/records/{DEMO_DEVICE_ID}/history", params={"limit": 1})
+        history = await client.get(
+            f"/records/{DEMO_DEVICE_ID}/history", params={"limit": 1}
+        )
         history.raise_for_status()
         latest = history.json()[0] if history.json() else None
         if latest:
@@ -103,7 +105,9 @@ async def run_demo() -> None:
         )
         anomalies.raise_for_status()
         events = anomalies.json()
-        history2 = await client.get(f"/records/{DEMO_DEVICE_ID}/history", params={"limit": 1})
+        history2 = await client.get(
+            f"/records/{DEMO_DEVICE_ID}/history", params={"limit": 1}
+        )
         latest2 = history2.json()[0] if history2.json() else None
         if events:
             top = events[0]
@@ -154,14 +158,14 @@ async def run_demo() -> None:
         alert_rows = alerts.json()
         if alert_rows:
             top_alert = alert_rows[0]
-            _ok(f"{top_alert['type']} ({top_alert['severity']}): {top_alert['message']}")
+            _ok(
+                f"{top_alert['type']} ({top_alert['severity']}): {top_alert['message']}"
+            )
         else:
             _warn("no alerts found")
 
         _step(6, "Forwarding")
-        forwarding = await client.get(
-            "/forwarding", params={"limit": 1}
-        )
+        forwarding = await client.get("/forwarding", params={"limit": 1})
         forwarding.raise_for_status()
         fwd_rows = forwarding.json()
         if fwd_rows:

@@ -38,9 +38,13 @@ def _patch_collaborators(monkeypatch):
     enqueue = _recorder()
     broadcast = _recorder()
 
-    monkeypatch.setattr(ingestion_service.notifications_service, "raise_alert", raise_alert)
+    monkeypatch.setattr(
+        ingestion_service.notifications_service, "raise_alert", raise_alert
+    )
     monkeypatch.setattr(ingestion_service, "record_audit", record_audit)
-    monkeypatch.setattr(ingestion_service.records_queries, "upsert_ingested", upsert_ingested)
+    monkeypatch.setattr(
+        ingestion_service.records_queries, "upsert_ingested", upsert_ingested
+    )
     monkeypatch.setattr(ingestion_service.devices_queries, "mark_online", mark_online)
     monkeypatch.setattr(ingestion_service.forwarding_service, "enqueue", enqueue)
     monkeypatch.setattr(ingestion_service, "broadcast_device_update", broadcast)
@@ -63,7 +67,7 @@ async def test_invalid_json_raises_alert_and_does_not_crash(monkeypatch):
     )
 
     assert len(calls["raise_alert"].calls) == 1
-    (_, kwargs) = calls["raise_alert"].calls[0]
+    _, kwargs = calls["raise_alert"].calls[0]
     assert kwargs["alert_type"] == "invalid_payload"
     assert not calls["upsert_ingested"].calls
     assert not calls["enqueue"].calls
@@ -79,7 +83,7 @@ async def test_invalid_structure_rejected_with_alert_and_audit(monkeypatch):
 
     assert len(calls["raise_alert"].calls) == 1
     assert len(calls["record_audit"].calls) == 1
-    (_, kwargs) = calls["record_audit"].calls[0]
+    _, kwargs = calls["record_audit"].calls[0]
     assert kwargs["action"] == "ingest_rejected"
     assert not calls["upsert_ingested"].calls
     assert not calls["enqueue"].calls
@@ -89,8 +93,7 @@ async def test_negative_counts_rejected_before_persistence(monkeypatch):
     calls = _patch_collaborators(monkeypatch)
     now = datetime.now(timezone.utc).isoformat()
     message = (
-        '{"device_id": "cam-01", "timestamp": "%s", '
-        '"counts": {"سواری": -10}}' % now
+        '{"device_id": "cam-01", "timestamp": "%s", ' '"counts": {"سواری": -10}}' % now
     )
 
     await ingestion_service.handle_message(
@@ -109,8 +112,7 @@ async def test_wrong_device_id_rejected_no_persistence(monkeypatch):
     calls = _patch_collaborators(monkeypatch)
     now = datetime.now(timezone.utc).isoformat()
     message = (
-        '{"device_id": "cam-99", "timestamp": "%s", '
-        '"counts": {"سواری": 10}}' % now
+        '{"device_id": "cam-99", "timestamp": "%s", ' '"counts": {"سواری": 10}}' % now
     )
 
     await ingestion_service.handle_message(
@@ -118,7 +120,7 @@ async def test_wrong_device_id_rejected_no_persistence(monkeypatch):
     )
 
     assert len(calls["raise_alert"].calls) == 1
-    (_, kwargs) = calls["raise_alert"].calls[0]
+    _, kwargs = calls["raise_alert"].calls[0]
     assert kwargs["alert_type"] == "invalid_payload"
     assert not calls["upsert_ingested"].calls
     assert not calls["enqueue"].calls
