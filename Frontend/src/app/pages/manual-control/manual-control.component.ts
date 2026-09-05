@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DeviceService } from '../../core/services/device.service';
 import { MlService } from '../../core/services/ml.service';
@@ -7,11 +7,11 @@ import { ReconstructionService } from '../../core/services/reconstruction.servic
 import { Device, ForwardingLogEntry, TrafficEvent } from '../../core/models/models';
 
 @Component({
-  selector: 'app-manual-control',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './manual-control.component.html',
-  styleUrl: './manual-control.component.scss',
+    selector: 'app-manual-control',
+    imports: [FormsModule],
+    templateUrl: './manual-control.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './manual-control.component.scss'
 })
 export class ManualControlComponent implements OnInit {
   readonly failedForwarding = signal<ForwardingLogEntry[]>([]);

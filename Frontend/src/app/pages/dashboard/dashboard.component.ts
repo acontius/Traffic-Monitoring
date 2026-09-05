@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import * as L from 'leaflet';
 import { Subscription } from 'rxjs';
@@ -20,11 +20,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
-  templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss',
+    selector: 'app-dashboard',
+    imports: [RouterLink],
+    templateUrl: './dashboard.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mapEl') mapElRef!: ElementRef<HTMLDivElement>;

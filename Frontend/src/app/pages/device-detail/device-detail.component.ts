@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DeviceService } from '../../core/services/device.service';
 import { MlService } from '../../core/services/ml.service';
@@ -13,11 +13,11 @@ import {
 } from '../../core/models/models';
 
 @Component({
-  selector: 'app-device-detail',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './device-detail.component.html',
-  styleUrl: './device-detail.component.scss',
+    selector: 'app-device-detail',
+    imports: [CommonModule],
+    templateUrl: './device-detail.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './device-detail.component.scss'
 })
 export class DeviceDetailComponent implements OnInit {
   readonly device = signal<Device | null>(null);

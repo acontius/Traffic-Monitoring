@@ -1,113 +1,123 @@
-<div class="device-detail" *ngIf="device() as d">
-  <section class="card">
-    <h2>{{ d.label || d.device_id }}</h2>
-    <div class="meta-grid">
-      <div><span class="meta-label">شناسه</span><br />{{ d.device_id }}</div>
-      <div><span class="meta-label">نوع محور</span><br />{{ d.location_type }}</div>
-      <div><span class="meta-label">وضعیت</span><br />{{ d.status }}</div>
-      <div><span class="meta-label">آخرین اتصال</span><br />{{ d.last_seen_at || '—' }}</div>
-      <div><span class="meta-label">پیمانکار</span><br />{{ d.contractor || '—' }}</div>
-      <div><span class="meta-label">آدرس IP</span><br />{{ d.ip_address || '—' }}</div>
-    </div>
-  </section>
-
-  <section class="card" *ngIf="health() as h">
-    <h3>سلامت دستگاه</h3>
-    <div class="meta-grid">
-      <div>
-        <span class="meta-label">وضعیت</span><br />
-        <span class="status-badge" [class]="'status-badge--' + h.health_status.toLowerCase()">
-          {{ h.health_status }}
-        </span>
+@if (device(); as d) {
+  <div class="device-detail">
+    <section class="card">
+      <h2>{{ d.label || d.device_id }}</h2>
+      <div class="meta-grid">
+        <div><span class="meta-label">شناسه</span><br />{{ d.device_id }}</div>
+        <div><span class="meta-label">نوع محور</span><br />{{ d.location_type }}</div>
+        <div><span class="meta-label">وضعیت</span><br />{{ d.status }}</div>
+        <div><span class="meta-label">آخرین اتصال</span><br />{{ d.last_seen_at || '—' }}</div>
+        <div><span class="meta-label">پیمانکار</span><br />{{ d.contractor || '—' }}</div>
+        <div><span class="meta-label">آدرس IP</span><br />{{ d.ip_address || '—' }}</div>
       </div>
-      <div><span class="meta-label">آخرین بررسی</span><br />{{ h.snapshot_at || '—' }}</div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h3>رویدادهای ناهنجار</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>زمان</th>
-            <th>نوع</th>
-            <th>شدت</th>
-            <th>امتیاز</th>
-            <th>وضعیت</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let event of anomalies()">
-            <td>{{ event.timestamp }}</td>
-            <td>{{ event.anomaly_type }}</td>
-            <td>{{ event.severity }}</td>
-            <td>{{ event.score | number: '1.2-2' }}</td>
-            <td>{{ event.status }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p *ngIf="!anomalies().length">موردی ثبت نشده است.</p>
-  </section>
-
-  <section class="card">
-    <h3>تاریخچه تردد</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>زمان</th>
-            <th>شمارش‌ها</th>
-            <th>معتبر</th>
-            <th>ناهنجار</th>
-            <th>بازسازی‌شده</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let record of history()">
-            <td>{{ record.timestamp }}</td>
-            <td>
-              <span *ngFor="let entry of countsOf(record)" class="count-chip">
-                {{ entry[0] }}: {{ entry[1] }}
-              </span>
-            </td>
-            <td>{{ record.is_valid ? '✔' : '✘' }}</td>
-            <td>{{ record.anomaly_flag ? '⚠️' : '—' }}</td>
-            <td>{{ record.is_reconstructed ? '✔' : '—' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="card">
-    <h3>تاریخچه بازسازی</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>زمان بازه</th>
-            <th>روش</th>
-            <th>اطمینان</th>
-            <th>نسخه مدل</th>
-            <th>وضعیت بررسی</th>
-            <th>دستی</th>
-            <th>ثبت‌شده در</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let entry of reconstructionLog()">
-            <td>{{ entry.timestamp }}</td>
-            <td>{{ entry.method }}</td>
-            <td>{{ entry.confidence != null ? (entry.confidence | number: '1.2-2') : '—' }}</td>
-            <td>{{ entry.model_version || '—' }}</td>
-            <td>{{ entry.review_status || 'auto' }}</td>
-            <td>{{ entry.manual_override ? entry.created_by : '—' }}</td>
-            <td>{{ entry.created_at }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</div>
+    </section>
+    @if (health(); as h) {
+      <section class="card">
+        <h3>سلامت دستگاه</h3>
+        <div class="meta-grid">
+          <div>
+            <span class="meta-label">وضعیت</span><br />
+            <span class="status-badge" [class]="'status-badge--' + h.health_status.toLowerCase()">
+              {{ h.health_status }}
+            </span>
+          </div>
+          <div><span class="meta-label">آخرین بررسی</span><br />{{ h.snapshot_at || '—' }}</div>
+        </div>
+      </section>
+    }
+    <section class="card">
+      <h3>رویدادهای ناهنجار</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>زمان</th>
+              <th>نوع</th>
+              <th>شدت</th>
+              <th>امتیاز</th>
+              <th>وضعیت</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of anomalies(); track event) {
+              <tr>
+                <td>{{ event.timestamp }}</td>
+                <td>{{ event.anomaly_type }}</td>
+                <td>{{ event.severity }}</td>
+                <td>{{ event.score | number: '1.2-2' }}</td>
+                <td>{{ event.status }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (!anomalies().length) {
+        <p>موردی ثبت نشده است.</p>
+      }
+    </section>
+    <section class="card">
+      <h3>تاریخچه تردد</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>زمان</th>
+              <th>شمارش‌ها</th>
+              <th>معتبر</th>
+              <th>ناهنجار</th>
+              <th>بازسازی‌شده</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of history(); track record) {
+              <tr>
+                <td>{{ record.timestamp }}</td>
+                <td>
+                  @for (entry of countsOf(record); track entry) {
+                    <span class="count-chip">
+                      {{ entry[0] }}: {{ entry[1] }}
+                    </span>
+                  }
+                </td>
+                <td>{{ record.is_valid ? '✔' : '✘' }}</td>
+                <td>{{ record.anomaly_flag ? '⚠️' : '—' }}</td>
+                <td>{{ record.is_reconstructed ? '✔' : '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <h3>تاریخچه بازسازی</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>زمان بازه</th>
+              <th>روش</th>
+              <th>اطمینان</th>
+              <th>نسخه مدل</th>
+              <th>وضعیت بررسی</th>
+              <th>دستی</th>
+              <th>ثبت‌شده در</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of reconstructionLog(); track entry) {
+              <tr>
+                <td>{{ entry.timestamp }}</td>
+                <td>{{ entry.method }}</td>
+                <td>{{ entry.confidence != null ? (entry.confidence | number: '1.2-2') : '—' }}</td>
+                <td>{{ entry.model_version || '—' }}</td>
+                <td>{{ entry.review_status || 'auto' }}</td>
+                <td>{{ entry.manual_override ? entry.created_by : '—' }}</td>
+                <td>{{ entry.created_at }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+}

@@ -13,21 +13,25 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let entry of failedForwarding()">
-            <td>{{ entry.device_id }}</td>
-            <td>{{ entry.timestamp }}</td>
-            <td>
-              <span class="status-badge" [class]="'status-badge--' + entry.status">
-                {{ entry.status }}
-              </span>
-            </td>
-            <td>{{ entry.attempt_count }}</td>
-            <td><button class="btn" type="button" (click)="resend(entry)">ارسال مجدد</button></td>
-          </tr>
+          @for (entry of failedForwarding(); track entry) {
+            <tr>
+              <td>{{ entry.device_id }}</td>
+              <td>{{ entry.timestamp }}</td>
+              <td>
+                <span class="status-badge" [class]="'status-badge--' + entry.status">
+                  {{ entry.status }}
+                </span>
+              </td>
+              <td>{{ entry.attempt_count }}</td>
+              <td><button class="btn" type="button" (click)="resend(entry)">ارسال مجدد</button></td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
-    <p *ngIf="!failedForwarding().length">موردی برای ارسال مجدد وجود ندارد.</p>
+    @if (!failedForwarding().length) {
+      <p>موردی برای ارسال مجدد وجود ندارد.</p>
+    }
   </section>
 
   <section class="card">
@@ -37,9 +41,11 @@
         دستگاه
         <select name="device_id" [(ngModel)]="overrideForm.device_id">
           <option value="" disabled>انتخاب کنید</option>
-          <option *ngFor="let device of devices()" [value]="device.device_id">
-            {{ device.label || device.device_id }}
-          </option>
+          @for (device of devices(); track device) {
+            <option [value]="device.device_id">
+              {{ device.label || device.device_id }}
+            </option>
+          }
         </select>
       </label>
 
@@ -60,7 +66,9 @@
 
       <button class="btn btn--primary" type="button" (click)="submitOverride()">ثبت</button>
 
-      <p *ngIf="overrideStatus() as status">{{ status }}</p>
+      @if (overrideStatus(); as status) {
+        <p>{{ status }}</p>
+      }
     </div>
   </section>
 
@@ -77,16 +85,20 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let event of trafficEvents()">
-            <td>{{ event.name }}</td>
-            <td>{{ event.event_type }}</td>
-            <td>{{ event.start_at }}</td>
-            <td>{{ event.end_at }}</td>
-          </tr>
+          @for (event of trafficEvents(); track event) {
+            <tr>
+              <td>{{ event.name }}</td>
+              <td>{{ event.event_type }}</td>
+              <td>{{ event.start_at }}</td>
+              <td>{{ event.end_at }}</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
-    <p *ngIf="!trafficEvents().length">رویدادی ثبت نشده است.</p>
+    @if (!trafficEvents().length) {
+      <p>رویدادی ثبت نشده است.</p>
+    }
 
     <div class="override-form">
       <label>
@@ -116,7 +128,9 @@
 
       <button class="btn btn--primary" type="button" (click)="submitTrafficEvent()">ثبت رویداد</button>
 
-      <p *ngIf="eventStatus() as status">{{ status }}</p>
+      @if (eventStatus(); as status) {
+        <p>{{ status }}</p>
+      }
     </div>
   </section>
 </div>

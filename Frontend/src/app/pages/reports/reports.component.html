@@ -6,9 +6,11 @@
         دستگاه
         <select name="device_id" [(ngModel)]="filter.device_id">
           <option [ngValue]="undefined">همه</option>
-          <option *ngFor="let device of devices()" [ngValue]="device.device_id">
-            {{ device.label || device.device_id }}
-          </option>
+          @for (device of devices(); track device) {
+            <option [ngValue]="device.device_id">
+              {{ device.label || device.device_id }}
+            </option>
+          }
         </select>
       </label>
 
@@ -51,15 +53,19 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of rows()">
-            <td>{{ row.device_id }}</td>
-            <td>{{ row.payload?.location_type }}</td>
-            <td>{{ row.timestamp }}</td>
-            <td>{{ row.payload?.counts | json }}</td>
-          </tr>
+          @for (row of rows(); track row) {
+            <tr>
+              <td>{{ row.device_id }}</td>
+              <td>{{ row.payload?.location_type }}</td>
+              <td>{{ row.timestamp }}</td>
+              <td>{{ $safeNavigationMigration(row.payload?.counts) | json }}</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
-    <p *ngIf="!rows().length">داده‌ای برای نمایش وجود ندارد.</p>
+    @if (!rows().length) {
+      <p>داده‌ای برای نمایش وجود ندارد.</p>
+    }
   </section>
 </div>

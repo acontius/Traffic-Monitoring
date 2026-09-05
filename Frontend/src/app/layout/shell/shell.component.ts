@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AlertService } from '../../core/services/alert.service';
@@ -7,11 +7,11 @@ import { LiveSocketService } from '../../core/services/live-socket.service';
 import { Alert } from '../../core/models/models';
 
 @Component({
-  selector: 'app-shell',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  templateUrl: './shell.component.html',
-  styleUrl: './shell.component.scss',
+    selector: 'app-shell',
+    imports: [RouterOutlet, RouterLink, RouterLinkActive],
+    templateUrl: './shell.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './shell.component.scss'
 })
 export class ShellComponent implements OnInit, OnDestroy {
   readonly unacknowledgedCount = signal(0);
