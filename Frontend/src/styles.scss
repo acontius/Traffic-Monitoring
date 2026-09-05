@@ -109,6 +109,23 @@ a {
   color: var(--muted);
 }
 
+.status-badge--healthy {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.status-badge--degraded,
+.status-badge--recovering {
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400e;
+}
+
+.status-badge--suspicious,
+.status-badge--offline {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
 .severity-badge--critical {
   background: rgba(239, 68, 68, 0.12);
   color: #b91c1c;

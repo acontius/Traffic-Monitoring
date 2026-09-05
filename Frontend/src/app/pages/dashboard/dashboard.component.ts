@@ -31,6 +31,7 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
 
   rows: DeviceRow[] = [];
   typeLabels = TYPE_LABELS;
+  recentEvents: string[] = [];
 
   private map: L.Map | null = null;
   private markers = new Map<string, L.Marker>();
@@ -55,8 +56,27 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     this.liveSocket.connect();
     this.subscription = this.liveSocket.events$.subscribe((event) => {
       if (event.event === 'device_update') {
-        const data = event.data as { device_id: string; status: string; latest: TrafficPayload | null };
+        const data = event.data as {
+          device_id: string;
+          status: string;
+          latest: TrafficPayload | null;
+        };
         this.applyUpdate(data.device_id, data.status === 'online', data.latest);
+      } else if (event.event === 'anomaly_detected') {
+        const data = event.data as { device_id: string; severity: string; anomaly_type: string };
+        this.recentEvents.unshift(
+          `⚠️ ${data.device_id}: ${data.anomaly_type} (${data.severity})`,
+        );
+        this.recentEvents = this.recentEvents.slice(0, 20);
+      } else if (event.event === 'reconstruction_completed') {
+        const data = event.data as { device_id: string; method: string; confidence: number | null };
+        const confidence = data.confidence != null ? data.confidence.toFixed(2) : '—';
+        this.recentEvents.unshift(`🔧 ${data.device_id}: ${data.method} (اطمینان ${confidence})`);
+        this.recentEvents = this.recentEvents.slice(0, 20);
+      } else if (event.event === 'device_health_changed') {
+        const data = event.data as { device_id: string; health_status: string };
+        this.recentEvents.unshift(`❤️ ${data.device_id}: ${data.health_status}`);
+        this.recentEvents = this.recentEvents.slice(0, 20);
       }
     });
   }

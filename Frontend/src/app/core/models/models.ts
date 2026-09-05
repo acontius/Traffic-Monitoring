@@ -70,6 +70,10 @@ export interface ReconstructionLogEntry {
   manual_override: boolean;
   created_by: string | null;
   created_at: string;
+  confidence?: number | null;
+  reconstruction_level?: string | null;
+  model_version?: string | null;
+  review_status?: 'auto' | 'pending_review' | 'accepted' | 'rejected' | 'edited';
 }
 
 export interface ReconstructionConfig {
@@ -81,7 +85,59 @@ export interface ReconstructionConfig {
   updated_by: string | null;
 }
 
+export interface DeviceHealth {
+  device_id: string;
+  health_status: 'HEALTHY' | 'DEGRADED' | 'SUSPICIOUS' | 'OFFLINE' | 'RECOVERING';
+  snapshot_at: string | null;
+  signals: Record<string, unknown>;
+}
+
+export interface AnomalyEvent {
+  id: number;
+  device_id: string;
+  timestamp: string;
+  anomaly_type: string;
+  severity: 'info' | 'warning' | 'critical';
+  score: number;
+  observed: unknown;
+  expected: unknown;
+  evidence: unknown;
+  status: string;
+  created_at: string;
+}
+
+export interface MlModel {
+  id: number;
+  model_name: string;
+  model_version: string;
+  model_type: string;
+  trained_at: string;
+  training_data_range_start: string | null;
+  training_data_range_end: string | null;
+  feature_version: string;
+  metrics: Record<string, unknown>;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface TrafficEvent {
+  id: number;
+  name: string;
+  event_type: string;
+  start_at: string;
+  end_at: string;
+  impact_scope: Record<string, unknown> | null;
+  description: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface LiveEvent {
-  event: 'alert' | 'device_update';
-  data: Alert | { device_id: string; status: string; latest: TrafficPayload | null };
+  event: 'alert' | 'device_update' | 'anomaly_detected' | 'reconstruction_completed' | 'device_health_changed';
+  data:
+    | Alert
+    | { device_id: string; status: string; latest: TrafficPayload | null }
+    | { device_id: string; timestamp: string; severity: string; score: number; anomaly_type: string }
+    | { device_id: string; timestamp: string; method: string; confidence: number | null; review_status: string }
+    | { device_id: string; health_status: string; signals: Record<string, unknown> };
 }
