@@ -11,10 +11,118 @@ import json
 import os
 import random
 from dataclasses import asdict, dataclass
-from datetime import datetime
-from typing import Dict, List
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
 
 import websockets
+
+# Controllable anomaly scenarios (spec: simulator upgrade for ML testing).
+# TCMS_SIMULATOR_ANOMALY_MODE applies to every device unless overridden per
+# device via TCMS_SIMULATOR_DEVICE_SCENARIOS (a JSON map device_id -> mode).
+# Mode "none" (the default) leaves TrafficPattern.generate_counts's output
+# byte-for-byte unchanged.
+SCENARIO_NONE = "none"
+SCENARIO_MISSING_DATA = "missing_data"
+SCENARIO_ZERO_DATA = "zero_data"
+SCENARIO_SPIKE = "spike"
+SCENARIO_DROP = "drop"
+SCENARIO_CONSTANT_VALUE = "constant_value"
+SCENARIO_CATEGORY_CORRUPTION = "category_corruption"
+SCENARIO_TIMESTAMP_DRIFT = "timestamp_drift"
+SCENARIO_BURST = "burst"
+SCENARIO_HOLIDAY_PATTERN = "holiday_pattern"
+SCENARIO_EVENT_PATTERN = "event_pattern"
+SCENARIO_GRADUAL_DRIFT = "gradual_drift"
+
+
+class ScenarioController:
+    """Wraps one device's send loop to optionally corrupt/suppress/skew its
+    readings, so the ML layer (device health, anomaly detection,
+    reconstruction) can actually be exercised end to end. Kept out of
+    `TrafficPattern` itself so the "normal" generator stays untouched."""
+
+    def __init__(self, mode: str):
+        self.mode = mode
+        self._tick = 0
+        self._constant_counts: Optional[Dict[str, int]] = None
+        self._burst_buffer: List["TrafficRecord"] = []
+
+    def apply(self, record: "TrafficRecord") -> Optional[List["TrafficRecord"]]:
+        """Returns a list of records to actually send for this tick (may be
+        empty to suppress sending, or contain more than one to simulate a
+        burst), or `None` to send `record` unchanged."""
+        self._tick += 1
+
+        if self.mode == SCENARIO_NONE:
+            return None
+
+        if self.mode == SCENARIO_MISSING_DATA:
+            return [] if self._tick % 3 == 0 else None
+
+        if self.mode == SCENARIO_ZERO_DATA:
+            record.counts = {k: 0 for k in record.counts}
+            return [record]
+
+        if self.mode == SCENARIO_SPIKE:
+            record.counts = {k: v * 8 + 50 for k, v in record.counts.items()}
+            return [record]
+
+        if self.mode == SCENARIO_DROP:
+            record.counts = {k: max(0, v // 10) for k, v in record.counts.items()}
+            return [record]
+
+        if self.mode == SCENARIO_CONSTANT_VALUE:
+            if self._constant_counts is None:
+                self._constant_counts = dict(record.counts)
+            record.counts = dict(self._constant_counts)
+            return [record]
+
+        if self.mode == SCENARIO_CATEGORY_CORRUPTION:
+            # One category (motorcycles) silently freezes at zero while
+            # others behave normally — spec's PARTIAL_FAILURE example.
+            record.counts["موتور"] = 0
+            return [record]
+
+        if self.mode == SCENARIO_TIMESTAMP_DRIFT:
+            drifted = datetime.fromisoformat(record.timestamp) + timedelta(
+                minutes=5 * self._tick
+            )
+            record.timestamp = drifted.isoformat(timespec="seconds")
+            return [record]
+
+        if self.mode == SCENARIO_BURST:
+            self._burst_buffer.append(record)
+            if len(self._burst_buffer) < 4:
+                return []
+            flush = self._burst_buffer
+            self._burst_buffer = []
+            return flush
+
+        if self.mode == SCENARIO_GRADUAL_DRIFT:
+            factor = 1.0 + min(3.0, self._tick * 0.05)
+            record.counts = {k: round(v * factor) for k, v in record.counts.items()}
+            return [record]
+
+        if self.mode in (SCENARIO_HOLIDAY_PATTERN, SCENARIO_EVENT_PATTERN):
+            # A large but *legitimate* shift, meant to exercise the calendar
+            # context rather than look like a device failure.
+            record.counts = {k: round(v * 2.5) for k, v in record.counts.items()}
+            return [record]
+
+        return None
+
+
+def load_device_scenarios() -> Dict[str, str]:
+    raw = os.environ.get("TCMS_SIMULATOR_DEVICE_SCENARIOS", "{}")
+    try:
+        parsed = json.loads(raw)
+        return (
+            {str(k): str(v) for k, v in parsed.items()}
+            if isinstance(parsed, dict)
+            else {}
+        )
+    except json.JSONDecodeError:
+        return {}
 
 
 @dataclass
@@ -245,22 +353,36 @@ class TrafficDevice:
 
 
 async def run_device(
-    device: TrafficDevice, hub_ws_url: str, token: str, interval_seconds: int
+    device: TrafficDevice,
+    hub_ws_url: str,
+    token: str,
+    interval_seconds: int,
+    scenario_mode: str = SCENARIO_NONE,
 ) -> None:
     """Connects this device to the hub's ingestion gateway and pushes a new
-    reading every `interval_seconds`, reconnecting on failure."""
+    reading every `interval_seconds`, reconnecting on failure. `scenario_mode`
+    (spec: simulator anomaly scenarios) optionally corrupts/suppresses/skews
+    what's actually sent so device-health/anomaly/reconstruction can be
+    exercised end to end; `"none"` (default) is unchanged behaviour."""
     url = f"{hub_ws_url}?device_id={device.device_id}&token={token}"
+    controller = ScenarioController(scenario_mode)
     while True:
         try:
             async with websockets.connect(url) as websocket:
-                print(f"✅ [{device.device_id}] connected to hub")
+                print(
+                    f"✅ [{device.device_id}] connected to hub "
+                    f"(scenario={scenario_mode})"
+                )
                 while True:
                     record = device.create_record(
                         interval_minutes=max(1, interval_seconds // 60)
                     )
-                    message = record.to_json()
-                    await websocket.send(message)
-                    print(f"[{device.device_id}] sent {message}")
+                    to_send = controller.apply(record)
+                    records = [record] if to_send is None else to_send
+                    for r in records:
+                        message = r.to_json()
+                        await websocket.send(message)
+                        print(f"[{device.device_id}] sent {message}")
                     await asyncio.sleep(interval_seconds)
         except (websockets.exceptions.ConnectionClosed, OSError) as exc:
             print(f"❌ [{device.device_id}] connection lost ({exc}); retrying in 5s")
@@ -281,10 +403,21 @@ async def main() -> None:
     hub_ws_url = os.environ.get("TCMS_HUB_WS_URL", "ws://localhost:8000/ws/ingest")
     token = os.environ.get("TCMS_DEVICE_TOKEN", "change-me-device-token")
     interval_seconds = int(os.environ.get("TCMS_SIMULATOR_INTERVAL_SECONDS", "300"))
+    default_mode = os.environ.get("TCMS_SIMULATOR_ANOMALY_MODE", SCENARIO_NONE)
+    device_scenarios = load_device_scenarios()
 
     devices = build_default_devices()
     await asyncio.gather(
-        *(run_device(device, hub_ws_url, token, interval_seconds) for device in devices)
+        *(
+            run_device(
+                device,
+                hub_ws_url,
+                token,
+                interval_seconds,
+                scenario_mode=device_scenarios.get(device.device_id, default_mode),
+            )
+            for device in devices
+        )
     )
 
 
