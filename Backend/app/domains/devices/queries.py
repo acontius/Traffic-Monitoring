@@ -35,6 +35,15 @@ async def get_location_type(pool: asyncpg.pool.Pool, device_id: str) -> str | No
         )
 
 
+async def get_expected_interval_seconds(pool: asyncpg.pool.Pool, device_id: str) -> int:
+    async with pool.acquire() as con:
+        value = await con.fetchval(
+            "SELECT expected_interval_seconds FROM devices WHERE device_id = $1",
+            device_id,
+        )
+    return value or 300
+
+
 async def get_latest_record_for_device(
     pool: asyncpg.pool.Pool, device_id: str
 ) -> dict | None:

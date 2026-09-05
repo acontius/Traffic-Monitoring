@@ -7,6 +7,7 @@ loop); this module contains no FastAPI-specific code so it can be tested
 without a live socket.
 """
 
+import asyncio
 import json
 import logging
 from typing import Optional
@@ -18,6 +19,7 @@ from Backend.app.core.config import get_settings
 from Backend.app.domains.devices import queries as devices_queries
 from Backend.app.domains.forwarding import service as forwarding_service
 from Backend.app.domains.ingestion import validation
+from Backend.app.domains.ml import service as ml_service
 from Backend.app.domains.notifications import service as notifications_service
 from Backend.app.domains.realtime.bus import broadcast_device_update
 from Backend.app.domains.records import queries as records_queries
@@ -105,6 +107,18 @@ async def handle_message(
         pool, device_id, timestamp, counts
     )
 
+    # Fast, synchronous ML layer (spec §44): rule violations + robust
+    # MAD z-score, no model load. This is a *second opinion* alongside the
+    # existing z-score check above, not a replacement for it — either can
+    # flag a record.
+    settings = get_settings()
+    if settings.ml_enabled:
+        quick = await ml_service.quick_score(pool, device_id, timestamp, counts)
+        if quick.anomaly_type and not is_anomaly:
+            is_anomaly = True
+            violations = ", ".join(quick.rule_violations) or "robust deviation"
+            anomaly_reason = f"{quick.anomaly_type}: {violations}"
+
     payload = {
         "device_id": device_id,
         "location_type": location_type,
@@ -127,8 +141,28 @@ async def handle_message(
             message=anomaly_reason or "الگوی ترافیک غیرعادی",
         )
 
-    await forwarding_service.enqueue(pool, device_id, timestamp, payload)
+    await forwarding_service.enqueue(
+        pool, device_id, timestamp, payload, data_classification="original"
+    )
     await broadcast_device_update(device_id, "online", payload)
+
+    if settings.ml_enabled:
+        expected_interval_seconds = await devices_queries.get_expected_interval_seconds(
+            pool, device_id
+        )
+        # Heavier, model-backed scoring + device-health touch. Dispatched as
+        # a background task so a slow/failing ML pass can never block the
+        # WebSocket ingest loop (spec §44).
+        asyncio.create_task(
+            ml_service.enrich_and_score(
+                pool,
+                device_id,
+                location_type,
+                timestamp,
+                counts,
+                expected_interval_seconds,
+            )
+        )
 
 
 async def handle_disconnect(pool: asyncpg.pool.Pool, device_id: str) -> None:

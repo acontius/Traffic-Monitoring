@@ -23,9 +23,18 @@ from Backend.app.domains.notifications.service import raise_alert
 
 
 async def enqueue(
-    pool: asyncpg.pool.Pool, device_id: str, timestamp: datetime, payload: dict
+    pool: asyncpg.pool.Pool,
+    device_id: str,
+    timestamp: datetime,
+    payload: dict,
+    data_classification: str = "original",
 ) -> None:
-    await queries.enqueue(pool, device_id, timestamp, payload)
+    """`data_classification` distinguishes original/validated/reconstructed/
+    manual_override data for the road authority (spec §33). Confidence
+    gating for low-confidence reconstructions happens in the caller
+    (`domains.reconstruction.engine`), which decides whether to call this at
+    all — kept out of `enqueue` itself so forwarding stays simple."""
+    await queries.enqueue(pool, device_id, timestamp, payload, data_classification)
 
 
 async def list_forwarding(

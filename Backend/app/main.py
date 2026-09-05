@@ -17,6 +17,11 @@ from Backend.app.domains.devices.router import router as devices_router
 from Backend.app.domains.forwarding.router import router as forwarding_router
 from Backend.app.domains.forwarding.worker import run_forever as run_forwarding_forever
 from Backend.app.domains.ingestion.router import router as ingestion_router
+from Backend.app.domains.ml.router import router as ml_router
+from Backend.app.domains.ml.workers import (
+    run_health_scan_forever,
+    run_retrain_forever,
+)
 from Backend.app.domains.realtime.router import router as realtime_router
 from Backend.app.domains.reconstruction.router import router as reconstruction_router
 from Backend.app.domains.reconstruction.worker import (
@@ -24,6 +29,7 @@ from Backend.app.domains.reconstruction.worker import (
 )
 from Backend.app.domains.records.router import router as records_router
 from Backend.app.domains.reports.router import router as reports_router
+from Backend.app.domains.traffic_events.router import router as traffic_events_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -35,6 +41,8 @@ async def lifespan(app: FastAPI):
     tasks = [
         asyncio.create_task(run_reconstruction_forever(app.state.pool, stop_event)),
         asyncio.create_task(run_forwarding_forever(app.state.pool, stop_event)),
+        asyncio.create_task(run_health_scan_forever(app.state.pool, stop_event)),
+        asyncio.create_task(run_retrain_forever(app.state.pool, stop_event)),
     ]
     try:
         yield
@@ -67,6 +75,8 @@ for domain_router in (
     forwarding_router,
     ingestion_router,
     realtime_router,
+    ml_router,
+    traffic_events_router,
 ):
     app.include_router(domain_router)
 

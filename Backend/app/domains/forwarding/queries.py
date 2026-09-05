@@ -8,21 +8,28 @@ import asyncpg
 
 
 async def enqueue(
-    pool: asyncpg.pool.Pool, device_id: str, timestamp: datetime, payload: dict
+    pool: asyncpg.pool.Pool,
+    device_id: str,
+    timestamp: datetime,
+    payload: dict,
+    data_classification: str = "original",
 ) -> None:
     async with pool.acquire() as con:
         await con.execute(
             """
-            INSERT INTO forwarding_log (device_id, timestamp, payload, status)
-            VALUES ($1, $2, $3, 'pending')
+            INSERT INTO forwarding_log
+                (device_id, timestamp, payload, status, data_classification)
+            VALUES ($1, $2, $3, 'pending', $4)
             ON CONFLICT (device_id, timestamp) DO UPDATE
                 SET payload = EXCLUDED.payload,
-                    status = 'pending'
+                    status = 'pending',
+                    data_classification = EXCLUDED.data_classification
                 WHERE forwarding_log.status = 'dead_letter'
             """,
             device_id,
             timestamp,
             json.dumps(payload),
+            data_classification,
         )
 
 
