@@ -1,11 +1,57 @@
-version: "3.9"
-
 services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: tcms-db
+    environment:
+      POSTGRES_USER: acontius
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: traffic_monitoring
+    volumes:
+      - tcms-db-data:/var/lib/postgresql/data
+      - ./Database/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
   app:
     build: .
-    container_name: traffic-monitoring-app
+    container_name: tcms-app
+    env_file: .env
+    environment:
+      TCMS_DB_DSN: postgresql://acontius:1234@db:5432/traffic_monitoring
+    depends_on:
+      - db
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     restart: unless-stopped
+
+  mock-external:
+    build: .
+    container_name: tcms-mock-external
+    command: ["uvicorn", "Backend.mock_external.server:app", "--host", "0.0.0.0", "--port", "9100"]
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+
+  frontend:
+    build: ./Frontend
+    container_name: tcms-frontend
+    depends_on:
+      - app
+    ports:
+      - "4200:80"
+    restart: unless-stopped
+
+  simulator:
+    build: .
+    container_name: tcms-simulator
+    command: ["python", "-m", "Backend.Devices.cameras"]
+    env_file: .env
+    environment:
+      TCMS_HUB_WS_URL: ws://app:8000/ws/ingest
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  tcms-db-data:

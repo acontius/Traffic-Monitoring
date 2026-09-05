@@ -1,0 +1,67 @@
+<div class="device-detail" *ngIf="device() as d">
+  <section class="card">
+    <h2>{{ d.label || d.device_id }}</h2>
+    <div class="meta-grid">
+      <div><span class="meta-label">شناسه</span><br />{{ d.device_id }}</div>
+      <div><span class="meta-label">نوع محور</span><br />{{ d.location_type }}</div>
+      <div><span class="meta-label">وضعیت</span><br />{{ d.status }}</div>
+      <div><span class="meta-label">آخرین اتصال</span><br />{{ d.last_seen_at || '—' }}</div>
+      <div><span class="meta-label">پیمانکار</span><br />{{ d.contractor || '—' }}</div>
+      <div><span class="meta-label">آدرس IP</span><br />{{ d.ip_address || '—' }}</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>تاریخچه تردد</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>زمان</th>
+            <th>شمارش‌ها</th>
+            <th>معتبر</th>
+            <th>ناهنجار</th>
+            <th>بازسازی‌شده</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of history()">
+            <td>{{ record.timestamp }}</td>
+            <td>
+              <span *ngFor="let entry of countsOf(record)" class="count-chip">
+                {{ entry[0] }}: {{ entry[1] }}
+              </span>
+            </td>
+            <td>{{ record.is_valid ? '✔' : '✘' }}</td>
+            <td>{{ record.anomaly_flag ? '⚠️' : '—' }}</td>
+            <td>{{ record.is_reconstructed ? '✔' : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>تاریخچه بازسازی</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>زمان بازه</th>
+            <th>روش</th>
+            <th>دستی</th>
+            <th>ثبت‌شده در</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of reconstructionLog()">
+            <td>{{ entry.timestamp }}</td>
+            <td>{{ entry.method }}</td>
+            <td>{{ entry.manual_override ? entry.created_by : '—' }}</td>
+            <td>{{ entry.created_at }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

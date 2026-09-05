@@ -12,4 +12,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "Backend.API.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "Backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

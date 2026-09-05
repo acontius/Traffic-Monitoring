@@ -1,0 +1,103 @@
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  height: calc(100vh - 120px);
+}
+
+.dashboard__map {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dashboard__map-el {
+  width: 100%;
+  height: 100%;
+}
+
+.dashboard__list {
+  overflow-y: auto;
+
+  h2 {
+    margin-top: 0;
+    font-size: 16px;
+  }
+}
+
+.device-row {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.device-row__link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.device-row__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.device-row__label {
+  font-weight: 600;
+}
+
+.device-row__meta {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+::ng-deep .camera-marker {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+::ng-deep .camera-marker__core {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+::ng-deep .camera-marker--active .camera-marker__core {
+  border-color: var(--success);
+}
+
+::ng-deep .camera-marker__pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+::ng-deep .camera-marker--active .camera-marker__pulse {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+@media (max-width: 900px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .dashboard__map-el {
+    height: 400px;
+  }
+}

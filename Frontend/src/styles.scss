@@ -1,0 +1,125 @@
+:root {
+  --bg: #eef3f8;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --line: #dbe4ee;
+  --text: #142133;
+  --muted: #6b7a90;
+  --primary: #2f6fed;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  direction: rtl;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 18px 22px;
+}
+
+.btn {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--surface-2);
+  }
+}
+
+.btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+}
+
+.btn--danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-badge--online,
+.status-badge--sent {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.status-badge--offline,
+.status-badge--dead_letter {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.status-badge--unknown,
+.status-badge--pending {
+  background: rgba(107, 122, 144, 0.15);
+  color: var(--muted);
+}
+
+.severity-badge--critical {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.severity-badge--warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400e;
+}
+
+.severity-badge--info {
+  background: rgba(47, 111, 237, 0.12);
+  color: #1d4ed8;
+}

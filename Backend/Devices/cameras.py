@@ -1,9 +1,19 @@
+"""Traffic-count device simulator.
+
+Generates realistic per-interval vehicle counts and connects to the TCMS
+hub's WebSocket ingestion gateway (`Backend/app/ws/ingest.py`) as a client —
+this is the actual SRS 2.1 shape: devices push data *into* the hub, rather
+than the hub pulling from a server the devices expose.
+"""
+
 import asyncio
 import json
+import os
 import random
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Dict, List
+
 import websockets
 
 
@@ -230,68 +240,31 @@ class TrafficDevice:
             location_type=self.location_type,
             timestamp=now.isoformat(timespec="seconds"),
             interval_minutes=interval_minutes,
-            counts=counts
+            counts=counts,
         )
 
 
-class TrafficSimulatorServer:
-    def __init__(self, devices: List[TrafficDevice], interval_seconds: int = 300):
-        self.devices = devices
-        self.interval_seconds = interval_seconds
-        self.clients = set()
-
-    async def register_client(self, websocket):
-        self.clients.add(websocket)
-        print(f"✅ Client connected: {websocket.remote_address}")
-
-    async def unregister_client(self, websocket):
-        self.clients.discard(websocket)
-        print(f"❌ Client disconnected: {websocket.remote_address}")
-
-    async def broadcast(self, message: str):
-        if not self.clients:
-            return
-
-        disconnected_clients = set()
-
-        for client in self.clients:
-            try:
-                await client.send(message)
-            except Exception:
-                disconnected_clients.add(client)
-
-        for client in disconnected_clients:
-            self.clients.discard(client)
-
-    async def simulate_device(self, device: TrafficDevice):
-        while True:
-            record = device.create_record(interval_minutes=self.interval_seconds // 60)
-            message = record.to_json()
-
-            print(f"[{device.device_id}] {message}")
-            await self.broadcast(message)
-
-            await asyncio.sleep(self.interval_seconds)
-
-    async def ws_handler(self, websocket):
-        await self.register_client(websocket)
+async def run_device(
+    device: TrafficDevice, hub_ws_url: str, token: str, interval_seconds: int
+) -> None:
+    """Connects this device to the hub's ingestion gateway and pushes a new
+    reading every `interval_seconds`, reconnecting on failure."""
+    url = f"{hub_ws_url}?device_id={device.device_id}&token={token}"
+    while True:
         try:
-            async for message in websocket:
-                print(f"Message from client: {message}")
-        except websockets.exceptions.ConnectionClosed:
-            pass
-        finally:
-            await self.unregister_client(websocket)
-
-    async def run(self, host: str = "0.0.0.0", port: int = 8765):
-        print(f"🚀 WebSocket server starting at ws://{host}:{port}")
-
-        async with websockets.serve(self.ws_handler, host, port):
-            tasks = [
-                asyncio.create_task(self.simulate_device(device))
-                for device in self.devices
-            ]
-            await asyncio.gather(*tasks)
+            async with websockets.connect(url) as websocket:
+                print(f"✅ [{device.device_id}] connected to hub")
+                while True:
+                    record = device.create_record(
+                        interval_minutes=max(1, interval_seconds // 60)
+                    )
+                    message = record.to_json()
+                    await websocket.send(message)
+                    print(f"[{device.device_id}] sent {message}")
+                    await asyncio.sleep(interval_seconds)
+        except (websockets.exceptions.ConnectionClosed, OSError) as exc:
+            print(f"❌ [{device.device_id}] connection lost ({exc}); retrying in 5s")
+            await asyncio.sleep(5)
 
 
 def build_default_devices() -> List[TrafficDevice]:
@@ -304,10 +277,15 @@ def build_default_devices() -> List[TrafficDevice]:
     ]
 
 
-async def main():
+async def main() -> None:
+    hub_ws_url = os.environ.get("TCMS_HUB_WS_URL", "ws://localhost:8000/ws/ingest")
+    token = os.environ.get("TCMS_DEVICE_TOKEN", "change-me-device-token")
+    interval_seconds = int(os.environ.get("TCMS_SIMULATOR_INTERVAL_SECONDS", "300"))
+
     devices = build_default_devices()
-    server = TrafficSimulatorServer(devices=devices, interval_seconds=300)
-    await server.run(host="0.0.0.0", port=8765)
+    await asyncio.gather(
+        *(run_device(device, hub_ws_url, token, interval_seconds) for device in devices)
+    )
 
 
 if __name__ == "__main__":

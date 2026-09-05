@@ -1,0 +1,66 @@
+<div class="manual-control">
+  <section class="card">
+    <h2>ارسال‌های ناموفق به راهداری</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>دستگاه</th>
+            <th>زمان</th>
+            <th>وضعیت</th>
+            <th>تعداد تلاش</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of failedForwarding()">
+            <td>{{ entry.device_id }}</td>
+            <td>{{ entry.timestamp }}</td>
+            <td>
+              <span class="status-badge" [class]="'status-badge--' + entry.status">
+                {{ entry.status }}
+              </span>
+            </td>
+            <td>{{ entry.attempt_count }}</td>
+            <td><button class="btn" type="button" (click)="resend(entry)">ارسال مجدد</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p *ngIf="!failedForwarding().length">موردی برای ارسال مجدد وجود ندارد.</p>
+  </section>
+
+  <section class="card">
+    <h2>بازنویسی دستی داده</h2>
+    <div class="override-form">
+      <label>
+        دستگاه
+        <select name="device_id" [(ngModel)]="overrideForm.device_id">
+          <option value="" disabled>انتخاب کنید</option>
+          <option *ngFor="let device of devices()" [value]="device.device_id">
+            {{ device.label || device.device_id }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        زمان بازه
+        <input type="datetime-local" name="timestamp" [(ngModel)]="overrideForm.timestamp" />
+      </label>
+
+      <label>
+        شمارش‌ها (JSON)
+        <textarea name="countsJson" rows="3" [(ngModel)]="overrideForm.countsJson"></textarea>
+      </label>
+
+      <label>
+        دلیل
+        <input type="text" name="reason" [(ngModel)]="overrideForm.reason" />
+      </label>
+
+      <button class="btn btn--primary" type="button" (click)="submitOverride()">ثبت</button>
+
+      <p *ngIf="overrideStatus() as status">{{ status }}</p>
+    </div>
+  </section>
+</div>
