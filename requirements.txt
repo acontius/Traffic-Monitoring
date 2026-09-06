@@ -4,7 +4,7 @@ anyio==4.14.2
 asyncpg==0.31.0
 bcrypt==4.0.1
 click==8.5.0
-fastapi==0.136.1
+fastapi==0.141.1
 gevent==26.4.0
 greenlet==3.5.0
 h11==0.16.0
