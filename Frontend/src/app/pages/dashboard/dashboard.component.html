@@ -5,26 +5,32 @@
 
   <aside class="dashboard__list card">
     <h2>وضعیت دستگاه‌ها</h2>
-    <div class="device-row" *ngFor="let row of rows">
-      <a [routerLink]="['/devices', row.device.device_id]" class="device-row__link">
-        <div class="device-row__top">
-          <span class="device-row__label">{{ row.device.label || row.device.device_id }}</span>
-          <span class="status-badge" [class]="'status-badge--' + (row.online ? 'online' : 'offline')">
-            {{ row.online ? 'فعال' : 'غیرفعال' }}
-          </span>
-        </div>
-        <div class="device-row__meta">
-          {{ row.device.device_id }} • {{ typeLabels[row.device.location_type] || row.device.location_type }}
-        </div>
-        <div class="device-row__meta">مجموع تردد آخرین بازه: {{ totalCount(row) }}</div>
-      </a>
-    </div>
+    @for (row of rows; track row) {
+      <div class="device-row">
+        <a [routerLink]="['/devices', row.device.device_id]" class="device-row__link">
+          <div class="device-row__top">
+            <span class="device-row__label">{{ row.device.label || row.device.device_id }}</span>
+            <span class="status-badge" [class]="'status-badge--' + (row.online ? 'online' : 'offline')">
+              {{ row.online ? 'فعال' : 'غیرفعال' }}
+            </span>
+          </div>
+          <div class="device-row__meta">
+            {{ row.device.device_id }} • {{ typeLabels[row.device.location_type] || row.device.location_type }}
+          </div>
+          <div class="device-row__meta">مجموع تردد آخرین بازه: {{ totalCount(row) }}</div>
+        </a>
+      </div>
+    }
   </aside>
 
-  <aside class="dashboard__list card" *ngIf="recentEvents.length">
-    <h2>رویدادهای هوش مصنوعی</h2>
-    <div class="device-row" *ngFor="let entry of recentEvents">
-      <div class="device-row__meta">{{ entry }}</div>
-    </div>
-  </aside>
+  @if (recentEvents.length) {
+    <aside class="dashboard__list card">
+      <h2>رویدادهای هوش مصنوعی</h2>
+      @for (entry of recentEvents; track entry) {
+        <div class="device-row">
+          <div class="device-row__meta">{{ entry }}</div>
+        </div>
+      }
+    </aside>
+  }
 </div>

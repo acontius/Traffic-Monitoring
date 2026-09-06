@@ -6,28 +6,35 @@
     </button>
   </div>
 
-  <div class="alert-row" *ngFor="let alert of alerts()">
-    <div class="alert-row__main">
-      <span class="status-badge" [class]="'severity-badge--' + alert.severity">
-        {{ alert.severity }}
-      </span>
-      <span class="alert-row__message">{{ alert.message }}</span>
+  @for (alert of alerts(); track alert) {
+    <div class="alert-row">
+      <div class="alert-row__main">
+        <span class="status-badge" [class]="'severity-badge--' + alert.severity">
+          {{ alert.severity }}
+        </span>
+        <span class="alert-row__message">{{ alert.message }}</span>
+      </div>
+      <div class="alert-row__meta">
+        {{ alert.device_id || '—' }} • {{ alert.created_at }}
+      </div>
+      @if (!alert.acknowledged_at) {
+        <button
+          class="btn"
+          type="button"
+          (click)="acknowledge(alert)"
+          >
+          تایید
+        </button>
+      }
+      @if (alert.acknowledged_at) {
+        <span class="alert-row__ack">
+          تایید‌شده توسط {{ alert.acknowledged_by }}
+        </span>
+      }
     </div>
-    <div class="alert-row__meta">
-      {{ alert.device_id || '—' }} • {{ alert.created_at }}
-    </div>
-    <button
-      class="btn"
-      type="button"
-      *ngIf="!alert.acknowledged_at"
-      (click)="acknowledge(alert)"
-    >
-      تایید
-    </button>
-    <span *ngIf="alert.acknowledged_at" class="alert-row__ack">
-      تایید‌شده توسط {{ alert.acknowledged_by }}
-    </span>
-  </div>
+  }
 
-  <p *ngIf="!alerts().length" class="alerts__empty">اعلانی وجود ندارد.</p>
+  @if (!alerts().length) {
+    <p class="alerts__empty">اعلانی وجود ندارد.</p>
+  }
 </div>

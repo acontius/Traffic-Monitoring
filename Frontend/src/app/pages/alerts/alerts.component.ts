@@ -1,16 +1,16 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+
+import { Component, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AlertService } from '../../core/services/alert.service';
 import { LiveSocketService } from '../../core/services/live-socket.service';
 import { Alert } from '../../core/models/models';
 
 @Component({
-  selector: 'app-alerts',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './alerts.component.html',
-  styleUrl: './alerts.component.scss',
+    selector: 'app-alerts',
+    imports: [],
+    templateUrl: './alerts.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './alerts.component.scss'
 })
 export class AlertsComponent implements OnInit, OnDestroy {
   readonly alerts = signal<Alert[]>([]);

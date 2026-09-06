@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DeviceService } from '../../core/services/device.service';
 import { ReportFilter, ReportService } from '../../core/services/report.service';
 import { Device, TrafficRecord } from '../../core/models/models';
 
 @Component({
-  selector: 'app-reports',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './reports.component.html',
-  styleUrl: './reports.component.scss',
+    selector: 'app-reports',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './reports.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './reports.component.scss'
 })
 export class ReportsComponent {
   readonly devices = signal<Device[]>([]);
