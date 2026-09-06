@@ -24,7 +24,7 @@ pydantic==2.13.4
 pydantic-settings==2.7.1
 pydantic_core==2.46.4
 Pygments==2.20.0
-pytest==9.0.3
+pytest==9.1.1
 pytest-asyncio==1.4.0
 starlette==1.0.0
 typing-inspection==0.4.4
