@@ -15,7 +15,7 @@ jdatetime==6.1.0
 numpy==2.3.4
 packaging==26.3
 pandas==2.3.3
-scikit-learn==1.7.2
+scikit-learn==1.9.0
 scipy==1.16.2
 passlib==1.7.4
 pluggy==1.6.0
