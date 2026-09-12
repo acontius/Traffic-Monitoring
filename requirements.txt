@@ -6,7 +6,7 @@ bcrypt==4.0.1
 click==8.5.0
 fastapi==0.141.1
 gevent==26.4.0
-greenlet==3.5.0
+greenlet==3.5.5
 h11==0.16.0
 httpx==0.28.1
 idna==3.14
